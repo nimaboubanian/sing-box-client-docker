@@ -29,9 +29,12 @@ Both curls must return the proxy's exit IP (not your VPS's public IP).
 | `LOG_LEVEL` | no | `warn` | sing-box log level |
 | `FINAL_TAG` | no | first `urltest` in sub | Which `urltest` group to use (e.g. `💦 Best Ping 🚀` or a chained `💦 🔗 …` variant) |
 | `RESTART_INTERVAL` | no | disabled | Scheduled refresh in seconds — re-fetch the sub, then swap sing-box only on success; failed refresh keeps the current tunnel |
-| `VPN_NET_NAME` | no | `softether-client-docker_vpn-net` | External Docker network name |
 
 Refresh the subscription: `docker compose restart sing-box-client`. Stop: `docker compose down`. Port is bound to host loopback only — no remote access by design.
+
+## Shared network
+
+Both containers join a docker network named `vpndogs` (see `compose.yaml`). Either project can come up first: the first one creates the network, the other reuses it; `docker compose down` in either project leaves the network alone while the other still uses it.
 
 ## Troubleshooting
 

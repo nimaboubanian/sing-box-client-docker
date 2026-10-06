@@ -1,7 +1,6 @@
 networks:
-  vpn-net:
-    external: true
-    name: ${VPN_NET_NAME:-softether-client-docker_vpn-net}
+  vpndogs:
+    name: vpndogs
 
 services:
   sing-box-client:
@@ -13,8 +12,7 @@ services:
     ports:
       - "127.0.0.1:1081:1081"   # SOCKS5 + HTTP CONNECT (mixed inbound)
     networks:
-      vpn-net:
-        ipv4_address: 172.30.0.11
+      - vpndogs
     environment:
       SUB_URL: ${SUB_URL:?required}
       LOG_LEVEL: ${LOG_LEVEL:-warn}
