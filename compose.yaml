@@ -19,4 +19,5 @@ services:
       SUB_URL: ${SUB_URL:?required}
       LOG_LEVEL: ${LOG_LEVEL:-warn}
       FINAL_TAG: ${FINAL_TAG:-}
+      RESTART_INTERVAL: ${RESTART_INTERVAL:-0}
     restart: unless-stopped
