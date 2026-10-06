@@ -2,4 +2,5 @@
 *.log
 .DS_Store
 compose.yml
+docs/
 
