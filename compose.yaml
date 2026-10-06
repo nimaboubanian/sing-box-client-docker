@@ -1,0 +1,22 @@
+networks:
+  vpn-net:
+    external: true
+    name: ${VPN_NET_NAME:-softether-client-docker_vpn-net}
+
+services:
+  sing-box-client:
+    build:
+      context: .
+      network: host   # build steps use the host's routing (proxy/tun), not the sandbox's
+    image: sing-box-client:latest
+    container_name: sing-box-client
+    ports:
+      - "127.0.0.1:1081:1081"   # SOCKS5 + HTTP CONNECT (mixed inbound)
+    networks:
+      vpn-net:
+        ipv4_address: 172.30.0.11
+    environment:
+      SUB_URL: ${SUB_URL:?required}
+      LOG_LEVEL: ${LOG_LEVEL:-warn}
+      FINAL_TAG: ${FINAL_TAG:-}
+    restart: unless-stopped
