@@ -3,4 +3,5 @@
 .DS_Store
 compose.yml
 docs/
+# build.sh
 

@@ -3,10 +3,7 @@ networks:
     name: vpndogs
 
 x-singbox: &singbox
-  build:
-    context: .
-    network: host
-  image: sing-box-client:latest
+  image: ghcr.io/nimaboubanian/sing-box-client:latest
   networks: [vpndogs]
   restart: unless-stopped
 
@@ -19,7 +16,6 @@ services:
       FINAL_TAG: ${FINAL_TAG_1:-}
       LOG_LEVEL: ${LOG_LEVEL:-warn}
       RESTART_INTERVAL: ${RESTART_INTERVAL:-0}
-
   sb2:
     <<: *singbox
     container_name: sb2
@@ -28,7 +24,6 @@ services:
       FINAL_TAG: ${FINAL_TAG_2:-}
       LOG_LEVEL: ${LOG_LEVEL:-warn}
       RESTART_INTERVAL: ${RESTART_INTERVAL:-0}
-
   sb3:
     <<: *singbox
     container_name: sb3
@@ -37,7 +32,6 @@ services:
       FINAL_TAG: ${FINAL_TAG_3:-}
       LOG_LEVEL: ${LOG_LEVEL:-warn}
       RESTART_INTERVAL: ${RESTART_INTERVAL:-0}
-
   sb4:
     <<: *singbox
     container_name: sb4
@@ -48,13 +42,10 @@ services:
       RESTART_INTERVAL: ${RESTART_INTERVAL:-0}
 
   lb:
-    image: haproxy:lts-alpine
+    image: ghcr.io/nimaboubanian/sing-box-lb:latest
     container_name: sb-lb
     networks: [vpndogs]
     ports:
       - "127.0.0.1:1081:1081"
-    volumes:
-      - ./lb/haproxy.cfg:/usr/local/etc/haproxy/haproxy.cfg:ro
     depends_on: [sb1, sb2, sb3, sb4]
     restart: unless-stopped
-

@@ -1,4 +1,5 @@
-FROM alpine:3.20
+ARG BASE_IMAGE=mirror.gcr.io/library/alpine:3.20
+FROM ${BASE_IMAGE}
 
 ARG SINGBOX_VERSION=1.14.2
 ARG TARGETARCH=amd64
