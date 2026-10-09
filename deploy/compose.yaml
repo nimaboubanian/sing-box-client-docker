@@ -3,7 +3,7 @@ networks:
     name: vpndogs
 
 x-singbox: &singbox
-  image: ghcr.io/nimaboubanian/sing-box-client:latest
+  image: nimaboubanian/sing-box-client:latest
   networks: [vpndogs]
   restart: unless-stopped
 
@@ -42,7 +42,7 @@ services:
       RESTART_INTERVAL: ${RESTART_INTERVAL:-0}
 
   lb:
-    image: ghcr.io/nimaboubanian/sing-box-lb:latest
+    image: nimaboubanian/sing-box-lb:latest
     container_name: sb-lb
     networks: [vpndogs]
     ports:
