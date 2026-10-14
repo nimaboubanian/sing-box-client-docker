@@ -13,12 +13,9 @@ set -euo pipefail
 build_config() {
     local sub_path="$1"
     [[ -r "$sub_path" ]] || { log "build_config: $sub_path not readable"; return 1; }
-    local sub_content
-    sub_content=$(cat "$sub_path")
 
     local final
-    final="${FINAL_TAG:-$(printf '%s' "$sub_content" \
-        | jq -r '[.outbounds[]? | select(.type == "urltest")][0].tag // empty')}"
+    final="${FINAL_TAG:-$(jq -r '[.outbounds[]? | select(.type == "urltest")][0].tag // empty' "$sub_path")}"
     [[ -n "$final" ]] || { log "build_config: no urltest group found in subscription"; return 1; }
 
     local known="[\"$final\"]" frontier="[\"$final\"]"
@@ -41,13 +38,15 @@ build_config() {
         frontier="$additions"
     done
 
+    # The sub is fed via --slurpfile, never argv: execve caps one arg at ~128KB
+    # and real subscriptions outgrow that ("Argument list too long").
     jq -S -n \
-        --argjson sub "$sub_content" \
+        --slurpfile sub "$sub_path" \
         --arg w "$final" \
         --argjson kept "$known" \
         --arg lvl "${LOG_LEVEL:-warn}" \
         '
-        ($sub.outbounds // []) as $all_outbounds
+        ($sub[0].outbounds // []) as $all_outbounds
         | ($all_outbounds | map(select(.tag as $t | $kept | index($t))) | map(del(.domain_resolver))) as $kept_outbounds
         | {
             log: {level: $lvl},
