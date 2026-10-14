@@ -18,35 +18,32 @@ build_config() {
     final="${FINAL_TAG:-$(jq -r '[.outbounds[]? | select(.type == "urltest")][0].tag // empty' "$sub_path")}"
     [[ -n "$final" ]] || { log "build_config: no urltest group found in subscription"; return 1; }
 
-    local known="[\"$final\"]" frontier="[\"$final\"]"
-    while :; do
-        local new_arr additions
-        new_arr=$(jq --argjson f "$frontier" '
-            .outbounds
-            | map(select(.tag as $t | $f | index($t)))
-            | map(
-                ((.outbounds // []) | map(select(. != null and . != "")))
-                + [((.detour // "") | select(. != ""))]
-              )
-            | flatten
-            | map(select(. != null and . != ""))
-            | unique
-        ' "$sub_path")
-        additions=$(jq -n --argjson n "$new_arr" --argjson k "$known" '$n - $k')
-        [[ "$(echo "$additions" | jq 'length')" == "0" ]] && break
-        known=$(jq -n --argjson k "$known" --argjson a "$additions" '$k + $a | unique')
-        frontier="$additions"
-    done
-
-    # The sub is fed via --slurpfile, never argv: execve caps one arg at ~128KB
-    # and real subscriptions outgrow that ("Argument list too long").
+    # One jq computes the closure AND renders. Nothing payload-sized ever rides
+    # in argv: execve caps one arg at ~128KB and both the sub and the closure
+    # list outgrow that ("Argument list too long"). The sub enters via
+    # --slurpfile; the closure loops stay inside jq.
     jq -S -n \
         --slurpfile sub "$sub_path" \
         --arg w "$final" \
-        --argjson kept "$known" \
         --arg lvl "${LOG_LEVEL:-warn}" \
         '
+        def deps($all; $k):
+            $all
+            | map(select(.tag as $t | $k | index($t)))
+            | map([
+                  (.detour // empty),
+                  ((.outbounds // []) | .[] | select(type == "string" and . != ""))
+                ])
+            | flatten
+            | unique
+            - $k;
+
         ($sub[0].outbounds // []) as $all_outbounds
+        | ([$w]
+           | until(
+                 (deps($all_outbounds; .) | length) == 0;
+                 . + deps($all_outbounds; .) | unique
+             )) as $kept
         | ($all_outbounds | map(select(.tag as $t | $kept | index($t))) | map(del(.domain_resolver))) as $kept_outbounds
         | {
             log: {level: $lvl},
